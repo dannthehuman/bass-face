@@ -1,3 +1,4 @@
+
 // I2C device class (I2Cdev) demonstration Arduino sketch for MPU6050 class using DMP (MotionApps v2.0)
 // 6/21/2012 by Jeff Rowberg <jeff@rowberg.net>
 // Updates should (hopefully) always be available at https://github.com/jrowberg/i2cdevlib
@@ -313,11 +314,13 @@ void loop() {
             mpu.dmpGetQuaternion(&q, fifoBuffer);
             mpu.dmpGetGravity(&gravity, &q);
             mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-            Serial.print("ypr\t");
+//            Serial.print("ypr\t");
             Serial.print(ypr[0] * 180/M_PI);
-            Serial.print("\t");
+            Serial.print(",");
+//            Serial.print("\t");
             Serial.print(ypr[1] * 180/M_PI);
-            Serial.print("\t");
+            Serial.print(",");
+//            Serial.print("\t");
             Serial.println(ypr[2] * 180/M_PI);
         #endif
 
