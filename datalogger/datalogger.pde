@@ -5,7 +5,8 @@ String val = null;
 int interval = 0;
 int lf = 10;
 PrintWriter output;
-int i = 0;
+int startTime;
+boolean ready = false;
 
 void setup()
 {
@@ -14,13 +15,17 @@ void setup()
   myPort = new Serial(this, portName, 115200);
   myPort.write('r');
   output = createWriter("values.csv");
+  
   println("Testing...");
+
   // Throw out the first reading, in case we started reading 
   // in the middle of a string from the sender.
   val = myPort.readStringUntil(lf);
   val = null;
   output.println("Time,X,Y,Z");
-  //delay(20);  //Get rid of junk repeated values in the beginning
+  //delay(200);  //Get rid of junk repeated values in the beginning
+  
+  startTime = millis();
 }
 
 void draw()
@@ -36,12 +41,11 @@ void draw()
   while (myPort.available() > 0) {
     val = myPort.readStringUntil(lf);         // read it and store it in val
   }
-  if (val != null)
+  if ((val != null))
   {
-    output.print(i);
+    output.print(millis() - startTime);
     output.print(",");
     output.print(val);   // Just print, the lf is included in the string
-    i += 1;
     print(val);
   }
 }
