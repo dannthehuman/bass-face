@@ -98,14 +98,14 @@ MPU6050 mpu;
 // from the FIFO. Note this also requires gravity vector calculations.
 // Also note that yaw/pitch/roll angles suffer from gimbal lock (for
 // more info, see: http://en.wikipedia.org/wiki/Gimbal_lock)
-#define OUTPUT_READABLE_YAWPITCHROLL
+//#define OUTPUT_READABLE_YAWPITCHROLL
 
 // uncomment "OUTPUT_READABLE_REALACCEL" if you want to see acceleration
 // components with gravity removed. This acceleration reference frame is
 // not compensated for orientation, so +X is always +X according to the
 // sensor, just without the effects of gravity. If you want acceleration
 // compensated for orientation, us OUTPUT_READABLE_WORLDACCEL instead.
-//#define OUTPUT_READABLE_REALACCEL
+#define OUTPUT_READABLE_REALACCEL
 
 // uncomment "OUTPUT_READABLE_WORLDACCEL" if you want to see acceleration
 // components with gravity removed and adjusted for the world frame of
@@ -134,6 +134,8 @@ uint8_t fifoBuffer[64]; // FIFO storage buffer
 Quaternion q;           // [w, x, y, z]         quaternion container
 VectorInt16 aa;         // [x, y, z]            accel sensor measurements
 VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
+VectorInt16 aaRealOld;
+unsigned long timeOld = 0;
 VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
 VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
@@ -142,7 +144,7 @@ float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gra
 // packet structure for InvenSense teapot demo
 uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\n' };
 
-
+int startTime;
 
 // ================================================================
 // ===               INTERRUPT DETECTION ROUTINE                ===
@@ -199,10 +201,12 @@ void setup() {
     devStatus = mpu.dmpInitialize();
 
     // supply your own gyro offsets here, scaled for min sensitivity
-    mpu.setXGyroOffset(220);
-    mpu.setYGyroOffset(76);
-    mpu.setZGyroOffset(-85);
-    mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
+    mpu.setXGyroOffset(-293);
+    mpu.setYGyroOffset(-94);
+    mpu.setZGyroOffset(-12);
+    mpu.setXAccelOffset(-2967); // 1688 factory default for my test chip
+    mpu.setYAccelOffset(-2570); // 1688 factory default for my test chip
+    mpu.setZAccelOffset(1159); // 1688 factory default for my test chip
 
     // make sure it worked (returns 0 if so)
     if (devStatus == 0) {
@@ -215,9 +219,12 @@ void setup() {
         attachInterrupt(0, dmpDataReady, RISING);
         mpuIntStatus = mpu.getIntStatus();
 
+        startTime = millis(); // set the start time
+
         // set our DMP Ready flag so the main loop() function knows it's okay to use it
         Serial.println(F("DMP ready! Waiting for first interrupt..."));
         dmpReady = true;
+
 
         // get expected DMP packet size for later comparison
         packetSize = mpu.dmpGetFIFOPacketSize();
@@ -315,6 +322,8 @@ void loop() {
             mpu.dmpGetGravity(&gravity, &q);
             mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 //            Serial.print("ypr\t");
+            Serial.print(millis() - startTime);
+            Serial.print(",");
             Serial.print(ypr[0] * 180/M_PI);
             Serial.print(",");
 //            Serial.print("\t");
@@ -330,12 +339,22 @@ void loop() {
             mpu.dmpGetAccel(&aa, fifoBuffer);
             mpu.dmpGetGravity(&gravity, &q);
             mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
-            Serial.print("areal\t");
+            unsigned long timeInterval = millis() - startTime;
+            Serial.print(timeInterval);
+            Serial.print(",");
             Serial.print(aaReal.x);
-            Serial.print("\t");
+            Serial.print(",");
             Serial.print(aaReal.y);
-            Serial.print("\t");
-            Serial.println(aaReal.z);
+            Serial.print(",");
+            Serial.print(aaReal.z);
+            Serial.print(",");
+            Serial.print((float)(aaReal.x - aaRealOld.x) / (timeInterval - timeOld));
+            Serial.print(",");
+            Serial.print((float)(aaReal.y - aaRealOld.y) / (timeInterval - timeOld));
+            Serial.print(",");
+            Serial.println((float)(aaReal.z - aaRealOld.z) / (timeInterval - timeOld));
+            aaRealOld = aaReal;
+            timeOld = timeInterval;
         #endif
 
         #ifdef OUTPUT_READABLE_WORLDACCEL

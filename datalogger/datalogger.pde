@@ -22,7 +22,7 @@ void setup()
   // in the middle of a string from the sender.
   val = myPort.readStringUntil(lf);
   val = null;
-  output.println("Time,X,Y,Z");
+  output.println("LoggerTime,DataTime,X,Y,Z,dX,dY,dZ");
   //delay(200);  //Get rid of junk repeated values in the beginning
   
   startTime = millis();
