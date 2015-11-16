@@ -348,11 +348,11 @@ void loop() {
             Serial.print(",");
             Serial.print(aaReal.z);
             Serial.print(",");
-            Serial.print((float)(aaReal.x - aaRealOld.x) / (timeInterval - timeOld));
+            Serial.print(scalingAbsolute((float)(aaReal.x - aaRealOld.x) / (timeInterval - timeOld)));
             Serial.print(",");
-            Serial.print((float)(aaReal.y - aaRealOld.y) / (timeInterval - timeOld));
+            Serial.print(scalingAbsolute((float)(aaReal.y - aaRealOld.y) / (timeInterval - timeOld)));
             Serial.print(",");
-            Serial.println((float)(aaReal.z - aaRealOld.z) / (timeInterval - timeOld));
+            Serial.println(scalingAbsolute((float)(aaReal.z - aaRealOld.z) / (timeInterval - timeOld)));
             aaRealOld = aaReal;
             timeOld = timeInterval;
         #endif
@@ -391,4 +391,20 @@ void loop() {
         blinkState = !blinkState;
         digitalWrite(LED_PIN, blinkState);
     }
+}
+
+int scalingAbsolute (int data)
+{
+ int tmp;
+  if (data < 0)
+  {
+    tmp = -data;
+  }
+  else 
+  {
+    tmp = data;
+  }
+  tmp = tmp / 6;
+  if (tmp <127) {return tmp; }
+  else {return 127; }
 }
